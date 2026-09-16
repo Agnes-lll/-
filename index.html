@@ -118,13 +118,13 @@ function render(){
   if(!img||!ctx)return;
   var cw=canvas.width/DPR,ch=canvas.height/DPR;
   ctx.clearRect(0,0,cw,ch);ctx.drawImage(img,0,0,cw,ch);
-  var bx=box.x*cw,by=box.y*cw*0+box.y*ch,bw=box.w*cw,bh=box.h*ch;
-  ctx.fillStyle='rgba(124,58,237,.06)';ctx.fillRect(bx,by,bw,bh);
-  ctx.strokeStyle='#7c3aed';ctx.lineWidth=2.5;ctx.strokeRect(bx,by,bw,bh);
+  var bx=box.x*cw,by=box.y*ch,bw=box.w*cw,bh=box.h*ch;
+  ctx.fillStyle='rgba(124,58,237,.03)';ctx.fillRect(bx,by,bw,bh);
+  ctx.strokeStyle='rgba(124,58,237,.35)';ctx.lineWidth=1.5;ctx.strokeRect(bx,by,bw,bh);
   // 角标
-  [[bx,by],[bx+bw,by],[bx,by+bh],[bx+bw,by+bh]].forEach(function(c){ctx.fillStyle='#fff';ctx.fillRect(c[0]-4,c[1]-4,8,8);ctx.strokeStyle='#7c3aed';ctx.lineWidth=1.5;ctx.strokeRect(c[0]-4,c[1]-4,8,8);});
+  ctx.fillStyle='rgba(255,255,255,.6)';ctx.fillRect(c[0]-3,c[1]-3,6,6);ctx.strokeStyle='rgba(124,58,237,.35)';ctx.lineWidth=1;ctx.strokeRect(c[0]-3,c[1]-3,6,6);
   // 右下角手柄
-  ctx.fillStyle='#7c3aed';ctx.beginPath();ctx.arc(bx+bw,by+bh,7,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='rgba(124,58,237,.4)';ctx.beginPath();ctx.arc(bx+bw,by+bh,6,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.5;ctx.stroke();
   // 尺寸标注
   drawDims(cw,ch);
 }
@@ -161,7 +161,7 @@ async function detect(){
     // 取置信度最高的
     var best=preds[0];
     for(var i=1;i<preds.length;i++){if(preds[i].score>best.score)best=preds[i];}
-    var bb=best.bbox; // [x,y,w,h] 像素
+    var bb=best.bbox;
     box={x:bb[0]/img.width,y:bb[1]/img.height,w:bb[2]/img.width,h:bb[3]/img.height};
     // 裁剪一下别太贴边
     box.x=Math.max(0.02,box.x-0.02);box.y=Math.max(0.02,box.y-0.02);
@@ -178,7 +178,6 @@ function getPos(e){
 }
 canvas.addEventListener('mousedown',function(e){
   var p=getPos(e);
-  var cw=1,ch=1;
   var bx=box.x,by=box.y,bw=box.w,bh=box.h;
   // 检查右下角手柄
   var handleR=0.04;
@@ -215,13 +214,12 @@ $('btnDownload').addEventListener('click',function(){
   if(!img)return;
   // 高清下载
   var dc=document.createElement('canvas');
-  var scale=2;
   dc.width=img.width;dc.height=img.height;
   var dctx=dc.getContext('2d');
   dctx.drawImage(img,0,0);
   var bx=box.x*img.width,by=box.y*img.height,bw=box.w*img.width,bh=box.h*img.height;
-  dctx.fillStyle='rgba(124,58,237,.06)';dctx.fillRect(bx,by,bw,bh);
-  dctx.strokeStyle='#7c3aed';dctx.lineWidth=4;dctx.strokeRect(bx,by,bw,bh);
+  dctx.fillStyle='rgba(124,58,237,.03)';dctx.fillRect(bx,by,bw,bh);
+  dctx.strokeStyle='rgba(124,58,237,.35)';dctx.lineWidth=2;dctx.strokeRect(bx,by,bw,bh);
   dctx.font='bold 28px sans-serif';dctx.textBaseline='middle';dctx.textAlign='center';
   var items=[
     {text:dims.L?'L: '+dims.L+unit:'',x:bx+bw/2,y:by-30},
@@ -237,7 +235,5 @@ $('btnDownload').addEventListener('click',function(){
   var a=document.createElement('a');a.download='labeled_image.png';a.href=dc.toDataURL('image/png');a.click();
 });
 </script>
-<script type="text/javascript" src="/accessproxy_statics/h5_fp.js" defer></script>
-<script type="text/javascript" src="/accessproxy_statics/wm.js" defer></script>
 </body>
 </html>
