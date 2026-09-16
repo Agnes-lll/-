@@ -73,9 +73,10 @@ body{font-family:"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;b
       <div class="field"><label>长 (L) — 图上上下方向</label><input type="number" id="inpL" placeholder="如 45" step="0.1"></div>
       <div class="field"><label>宽 (W) — 图上左右方向</label><input type="number" id="inpW" placeholder="如 30" step="0.1"></div>
       <div class="field"><label>高 (H) — 标在框旁</label><input type="number" id="inpH" placeholder="如 20" step="0.1"></div>
+      <div class="field"><label>型号 — 标在右下角</label><input type="text" id="inpModel" placeholder="如 SKU-A001"></div>
       <div class="field"><label>单位</label><select id="unitSel"><option value="cm">cm</option><option value="mm">mm</option><option value="in">inch</option></select></div>
       <button class="btn btn-p dl-btn" id="btnDownload">⬇️ 下载标注图</button>
-      <div class="hint">💡 提示：<br>1. 上传后自动识别主体并框选<br>2. 拖框移动，拖右下角圆点缩放<br>3. 输入长宽高，标注自动画在图上<br>4. 点击下载保存成品</div>
+      <div class="hint">💡 提示：<br>1. 上传后自动识别主体并框选<br>2. 拖框移动，拖右下角圆点缩放<br>3. 输入长宽高和型号，标注自动画在图上<br>4. 点击下载保存成品</div>
     </div>
   </div>
 </div>
@@ -87,7 +88,7 @@ body{font-family:"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;b
 function $(id){return document.getElementById(id);}
 var toastT;
 function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show');},2500);}
-var img=null,box={x:.15,y:.15,w:.7,h:.7},model=null,canvas=$('canvas'),ctx=null,drag=null,dims={L:'',W:'',H:''},unit='cm';
+var img=null,box={x:.15,y:.15,w:.7,h:.7},model=null,canvas=$('canvas'),ctx=null,drag=null,dims={L:'',W:'',H:''},modelText='',unit='cm';
 var DPR=window.devicePixelRatio||1;
 function showOverlay(m){$('overlayMsg').textContent=m;$('overlay').classList.add('show');}
 function hideOverlay(){$('overlay').classList.remove('show');}
@@ -121,14 +122,11 @@ function render(){
   var bx=box.x*cw,by=box.y*ch,bw=box.w*cw,bh=box.h*ch;
   ctx.fillStyle='rgba(255,255,255,.03)';ctx.fillRect(bx,by,bw,bh);
   ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.5;ctx.strokeRect(bx,by,bw,bh);
-  // 角标
   [[bx,by],[bx+bw,by],[bx,by+bh],[bx+bw,by+bh]].forEach(function(c){
     ctx.fillStyle='rgba(255,255,255,.6)';ctx.fillRect(c[0]-3,c[1]-3,6,6);
     ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1;ctx.strokeRect(c[0]-3,c[1]-3,6,6);
   });
-  // 右下角手柄
   ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.arc(bx+bw,by+bh,6,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.5;ctx.stroke();
-  // 尺寸标注
   drawDims(cw,ch);
 }
 function drawDims(cw,ch){
@@ -142,18 +140,26 @@ function drawDims(cw,ch){
   items.forEach(function(l){
     if(!l.text)return;
     var tw=ctx.measureText(l.text).width;
-    // 引线
     ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.setLineDash([]);
     ctx.beginPath();
     if(l.side==='top'){ctx.moveTo(bx+bw*0.3,by);ctx.lineTo(bx+bw*0.3,by-12);ctx.lineTo(l.x-tw/2-4,l.y);}
     else if(l.side==='right'){ctx.moveTo(bx+bw,by+bh*0.3);ctx.lineTo(bx+bw+12,by+bh*0.3);ctx.lineTo(l.x-tw/2-4,l.y);}
     else{ctx.moveTo(bx,by+bh*0.3);ctx.lineTo(bx-12,by+bh*0.3);ctx.lineTo(l.x+tw/2+4,l.y);}
     ctx.stroke();
-    // 标签：白底黑字
     ctx.fillStyle='#fff';ctx.fillRect(l.x-tw/2-5,l.y-12,tw+10,24);
     ctx.strokeStyle='rgba(0,0,0,.15)';ctx.lineWidth=1;ctx.strokeRect(l.x-tw/2-5,l.y-12,tw+10,24);
     ctx.fillStyle='#1c1917';ctx.fillText(l.text,l.x,l.y);
   });
+  // 型号标签：白底黑字小号，右下角
+  if(modelText){
+    ctx.font='12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    var mt='型号: '+modelText;
+    var mtw=ctx.measureText(mt).width;
+    var mx=bx+bw-mtw/2-6,my=by+bh-10;
+    ctx.fillStyle='rgba(255,255,255,.85)';ctx.fillRect(mx-mtw/2-4,my-8,mtw+8,16);
+    ctx.strokeStyle='rgba(0,0,0,.12)';ctx.lineWidth=1;ctx.strokeRect(mx-mtw/2-4,my-8,mtw+8,16);
+    ctx.fillStyle='#1c1917';ctx.fillText(mt,mx,my);
+  }
 }
 async function detect(){
   if(!model){return;}
@@ -208,6 +214,8 @@ canvas.addEventListener('mouseleave',function(){drag=null;});
     render();
   });
 });
+$('inpModel').addEventListener('input',function(){modelText=$('inpModel').value;render();});
+$('inpModel').addEventListener('change',function(){modelText=$('inpModel').value;render();});
 $('unitSel').addEventListener('change',function(){unit=$('unitSel').value;render();});
 $('btnRescan').addEventListener('click',function(){if(img)detect();});
 $('btnReset').addEventListener('click',function(){box={x:.15,y:.15,w:.7,h:.7};render();});
@@ -233,6 +241,15 @@ $('btnDownload').addEventListener('click',function(){
     dctx.strokeStyle='rgba(0,0,0,.15)';dctx.lineWidth=1;dctx.strokeRect(l.x-tw/2-8,l.y-18,tw+16,36);
     dctx.fillStyle='#1c1917';dctx.fillText(l.text,l.x,l.y);
   });
+  if(modelText){
+    dctx.font='20px sans-serif';dctx.textAlign='center';dctx.textBaseline='middle';
+    var mt='型号: '+modelText;
+    var mtw=dctx.measureText(mt).width;
+    var mx=bx+bw-mtw/2-10,my=by+bh-16;
+    dctx.fillStyle='rgba(255,255,255,.85)';dctx.fillRect(mx-mtw/2-6,my-12,mtw+12,24);
+    dctx.strokeStyle='rgba(0,0,0,.12)';dctx.lineWidth=1;dctx.strokeRect(mx-mtw/2-6,my-12,mtw+12,24);
+    dctx.fillStyle='#1c1917';dctx.fillText(mt,mx,my);
+  }
   var a=document.createElement('a');a.download='labeled_image.png';a.href=dc.toDataURL('image/png');a.click();
 });
 </script>
