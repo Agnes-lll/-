@@ -64,15 +64,13 @@ body{font-family:"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;b
       <div class="canvas-tools">
         <button class="btn btn-p" id="btnRescan">🔄 重新识别</button>
         <button class="btn btn-g" id="btnReset">↺ 重置标注框</button>
-        <span style="font-size:12px;color:var(--tl;margin-left:auto;">拖框调整位置 · 拖右下角缩放</span>
+        <span style="font-size:12px;color:var(--tl);margin-left:auto;">拖框调整位置 · 拖右下角缩放</span>
       </div>
     </div>
     <div class="side">
       <h3>📏 尺寸标注</h3>
       <div class="detect"><div class="label">识别结果</div><div class="name" id="detectName">—</div></div>
-      <div class="field"><label>长 (L) — 图上上下方向</label><span style="font-size:12px;color:var(--tl;">&nbsp;</span><input type="number" id="inpL" placeholder="如 45" step="0.1"></div>
-      <div class="field"><label>宽 (W) — 图上左右方向</label><input type="number" id="inpW" placeholder="如 30" step="0.1"></div>
-      <div class="field"><label>高 (H) — 标在框旁</label><input type="number" id="inpH" placeholder="如 20" step="0.1"></div>
+      <div class="field"><label>长 (L) — 图上上下方向</label><input type="number" id="inpL" placeholder="如 45" step="0.1"></div>
       <div class="field"><label>宽 (W) — 图上左右方向</label><input type="number" id="inpW" placeholder="如 30" step="0.1"></div>
       <div class="field"><label>高 (H) — 标在框旁</label><input type="number" id="inpH" placeholder="如 20" step="0.1"></div>
       <div class="field"><label>型号 — 标在右下角</label><input type="text" id="inpModel" placeholder="如 SKU-A001"></div>
@@ -121,14 +119,17 @@ function render(){
   if(!img||!ctx)return;
   var cw=canvas.width/DPR,ch=canvas.height/DPR;
   ctx.clearRect(0,0,cw,ch);ctx.drawImage(img,0,0,cw,ch);
-  var bx=box.x*cw,by=box.y*cw*0+box.y*ch,bw=box.w*cw,bh=box.h*ch;
+  var bx=box.x*cw,by=box.y*ch,bw=box.w*cw,bh=box.h*ch;
   ctx.fillStyle='rgba(255,255,255,.03)';ctx.fillRect(bx,by,bw,bh);
   ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.5;ctx.strokeRect(bx,by,bw,bh);
+  // 角标
   [[bx,by],[bx+bw,by],[bx,by+bh],[bx+bw,by+bh]].forEach(function(c){
     ctx.fillStyle='rgba(255,255,255,.6)';ctx.fillRect(c[0]-3,c[1]-3,6,6);
     ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1;ctx.strokeRect(c[0]-3,c[1]-3,6,6);
   });
+  // 右下角手柄
   ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.arc(bx+bw,by+bh,6,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.5;ctx.stroke();
+  // 尺寸标注
   drawDims(cw,ch);
 }
 function drawDims(cw,ch){
@@ -142,16 +143,19 @@ function drawDims(cw,ch){
   items.forEach(function(l){
     if(!l.text)return;
     var tw=ctx.measureText(l.text).width;
+    // 引线
     ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.setLineDash([]);
     ctx.beginPath();
     if(l.side==='top'){ctx.moveTo(bx+bw*0.3,by);ctx.lineTo(bx+bw*0.3,by-12);ctx.lineTo(l.x-tw/2-4,l.y);}
     else if(l.side==='right'){ctx.moveTo(bx+bw,by+bh*0.3);ctx.lineTo(bx+bw+12,by+bh*0.3);ctx.lineTo(l.x-tw/2-4,l.y);}
     else{ctx.moveTo(bx,by+bh*0.3);ctx.lineTo(bx-12,by+bh*0.3);ctx.lineTo(l.x+tw/2+4,l.y);}
     ctx.stroke();
+    // 标签底色：白底黑字
     ctx.fillStyle='#fff';ctx.fillRect(l.x-tw/2-5,l.y-12,tw+10,24);
     ctx.strokeStyle='rgba(0,0,0,.15)';ctx.lineWidth=1;ctx.strokeRect(l.x-tw/2-5,l.y-12,tw+10,24);
     ctx.fillStyle='#1c1917';ctx.fillText(l.text,l.x,l.y);
   });
+  // 型号标签：白底黑字小号，放右下角
   if(modelText){
     ctx.font='12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
     var mt='型号: '+modelText;
@@ -168,11 +172,13 @@ async function detect(){
   try{
     var preds=await model.detect(img);
     hideOverlay();
-    if(preds.length===0){hideOverlay();toast('未识别到主体，可手动框选');$('detectName').textContent='未识别到';return;}
+    if(preds.length===0){toast('未识别到主体，请手动框选');$('detectName').textContent='未识别到';return;}
+    // 取置信度最高的
     var best=preds[0];
     for(var i=1;i<preds.length;i++){if(preds[i].score>best.score)best=preds[i];}
-    var bb=best.bbox; // [x,y,w,h] 像素
+    var bb=best.bbox;
     box={x:bb[0]/img.width,y:bb[1]/img.height,w:bb[2]/img.width,h:bb[3]/img.height};
+    // 裁剪一下别太贴边
     box.x=Math.max(0.02,box.x-0.02);box.y=Math.max(0.02,box.y-0.02);
     box.w=Math.min(0.98-box.x,box.w+0.04);box.h=Math.min(0.98-box.y,box.h+0.04);
     var name=best.class;
@@ -180,6 +186,7 @@ async function detect(){
     render();
   }catch(e){hideOverlay();toast('识别失败，可手动框选');}
 }
+// 交互
 function getPos(e){
   var r=canvas.getBoundingClientRect();
   return {x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};
@@ -187,8 +194,10 @@ function getPos(e){
 canvas.addEventListener('mousedown',function(e){
   var p=getPos(e);
   var bx=box.x,by=box.y,bw=box.w,bh=box.h;
+  // 检查右下角手柄
   var handleR=0.04;
   if(Math.abs(p.x-(bx+bw))<handleR&&Math.abs(p.y-(by+bh))<handleR){drag='resize';return;}
+  // 检查框内
   if(p.x>bx&&p.x<bx+bw&&p.y>by&&p.y<by+bh){drag='move';return;}
 });
 canvas.addEventListener('mousemove',function(e){
@@ -206,19 +215,27 @@ canvas.addEventListener('mousemove',function(e){
 });
 canvas.addEventListener('mouseup',function(){drag=null;});
 canvas.addEventListener('mouseleave',function(){drag=null;});
-['inpL','inpW','inpW','inpH'].forEach(function(id){
-  $(id).addEventListener('input',function(){dims.L=$('inpL').value;dims.W=$('inpW').value;dims.H=$('inpH').value;render();});
-  $(id).addEventListener('change',function(){dims.L=$('inpL').value;dims.W=$('inpW').value;dims.H=$('inpH').value;render();});
+// 输入
+['inpL','inpW','inpH'].forEach(function(id){
+  $(id).addEventListener('input',function(){
+    dims.L=$('inpL').value;dims.W=$('inpW').value;dims.H=$('inpH').value;
+    render();
+  });
+  $(id).addEventListener('change',function(){
+    dims.L=$('inpL').value;dims.W=$('inpW').value;dims.H=$('inpH').value;
+    render();
+  });
 });
 $('inpModel').addEventListener('input',function(){modelText=$('inpModel').value;render();});
 $('inpModel').addEventListener('change',function(){modelText=$('inpModel').value;render();});
 $('unitSel').addEventListener('change',function(){unit=$('unitSel').value;render();});
+// 按钮
 $('btnRescan').addEventListener('click',function(){if(img)detect();});
 $('btnReset').addEventListener('click',function(){box={x:.15,y:.15,w:.7,h:.7};render();});
 $('btnDownload').addEventListener('click',function(){
   if(!img)return;
+  // 高清下载
   var dc=document.createElement('canvas');
-  var scale=2;
   dc.width=img.width;dc.height=img.height;
   var dctx=dc.getContext('2d');
   dctx.drawImage(img,0,0);
@@ -229,13 +246,20 @@ $('btnDownload').addEventListener('click',function(){
   var items=[
     {text:dims.L?'L: '+dims.L+unit:'',x:bx+bw/2,y:by-30},
     {text:dims.W?dims.W+unit+'  W':'',x:bx+bw+50,y:by+bh/2},
-    {text:dims.H?dims.H+unit:'',x:bx-50,y:by+bh/2}
+    {text:dims.H?'H: '+dims.H+unit:'',x:bx-50,y:by+bh/2}
   ];
-  var mt='';
-  var dctx=dc.getContext('2d');
-  dctx.font='20px sans-serif';dctx.textAlign='center';dctx.textBaseline='middle';
+  items.forEach(function(l){
+    if(!l.text)return;
+    var tw=dctx.measureText(l.text).width;
+    dctx.fillStyle='#fff';dctx.fillRect(l.x-tw/2-8,l.y-18,tw+16,36);
+    dctx.strokeStyle='rgba(0,0,0,.15)';dctx.lineWidth=1;dctx.strokeRect(l.x-tw/2-8,l.y-18,tw+16,36);
+    dctx.fillStyle='#1c1917';dctx.fillText(l.text,l.x,l.y);
+  });
+  // 型号标签：高清版
   if(modelText){
-    mt='型号: '+modelText;var mtw=dctx.measureText(mt).width;
+    dctx.font='20px sans-serif';dctx.textAlign='center';dctx.textBaseline='middle';
+    var mt='型号: '+modelText;
+    var mtw=dctx.measureText(mt).width;
     var mx=bx+bw-mtw/2-10,my=by+bh-16;
     dctx.fillStyle='rgba(255,255,255,.85)';dctx.fillRect(mx-mtw/2-6,my-12,mtw+12,24);
     dctx.strokeStyle='rgba(0,0,0,.12)';dctx.lineWidth=1;dctx.strokeRect(mx-mtw/2-6,my-12,mtw+12,24);
