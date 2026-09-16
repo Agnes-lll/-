@@ -44,6 +44,11 @@ body{font-family:"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;b
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1c1917;color:#fff;padding:11px 20px;border-radius:11px;font-size:13px;z-index:3000;display:none;box-shadow:0 8px 24px rgba(0,0,0,.3);}
 .toast.show{display:block;}
 @media(max-width:800px){.workspace{flex-direction:column;}.side{width:100%;}}
+#previewModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:5000;align-items:center;justify-content:center;flex-direction:column;padding:20px;}
+#previewModal.show{display:flex;}
+#previewImg{max-width:100%;max-height:75vh;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4);}
+#previewModal .pv-tip{color:#fff;font-size:13px;margin-top:16px;text-align:center;}
+#previewModal .pv-close{margin-top:14px;padding:8px 24px;border-radius:10px;border:none;background:#fff;color:#1c1917;font-size:14px;font-weight:600;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -82,6 +87,11 @@ body{font-family:"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;b
 </div>
 <div class="overlay" id="overlay"><div class="spin"></div><div class="msg" id="overlayMsg">正在加载识别模型…</div></div>
 <div class="toast" id="toast"></div>
+<div id="previewModal">
+  <img id="previewImg" alt="标注预览">
+  <div class="pv-tip">📱 长按图片可以保存到相册<br>💻 右键图片可以另存为</div>
+  <button class="pv-close" id="pvClose">关闭</button>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
 <script>
@@ -122,14 +132,11 @@ function render(){
   var bx=box.x*cw,by=box.y*ch,bw=box.w*cw,bh=box.h*ch;
   ctx.fillStyle='rgba(255,255,255,.03)';ctx.fillRect(bx,by,bw,bh);
   ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.5;ctx.strokeRect(bx,by,bw,bh);
-  // 角标
   [[bx,by],[bx+bw,by],[bx,by+bh],[bx+bw,by+bh]].forEach(function(c){
     ctx.fillStyle='rgba(255,255,255,.6)';ctx.fillRect(c[0]-3,c[1]-3,6,6);
     ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1;ctx.strokeRect(c[0]-3,c[1]-3,6,6);
   });
-  // 右下角手柄
   ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.arc(bx+bw,by+bh,6,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.5;ctx.stroke();
-  // 尺寸标注
   drawDims(cw,ch);
 }
 function drawDims(cw,ch){
@@ -143,19 +150,16 @@ function drawDims(cw,ch){
   items.forEach(function(l){
     if(!l.text)return;
     var tw=ctx.measureText(l.text).width;
-    // 引线
     ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.setLineDash([]);
     ctx.beginPath();
     if(l.side==='top'){ctx.moveTo(bx+bw*0.3,by);ctx.lineTo(bx+bw*0.3,by-12);ctx.lineTo(l.x-tw/2-4,l.y);}
     else if(l.side==='right'){ctx.moveTo(bx+bw,by+bh*0.3);ctx.lineTo(bx+bw+12,by+bh*0.3);ctx.lineTo(l.x-tw/2-4,l.y);}
     else{ctx.moveTo(bx,by+bh*0.3);ctx.lineTo(bx-12,by+bh*0.3);ctx.lineTo(l.x+tw/2+4,l.y);}
     ctx.stroke();
-    // 标签底色：白底黑字
     ctx.fillStyle='#fff';ctx.fillRect(l.x-tw/2-5,l.y-12,tw+10,24);
     ctx.strokeStyle='rgba(0,0,0,.15)';ctx.lineWidth=1;ctx.strokeRect(l.x-tw/2-5,l.y-12,tw+10,24);
     ctx.fillStyle='#1c1917';ctx.fillText(l.text,l.x,l.y);
   });
-  // 型号标签：白底黑字小号，放右下角
   if(modelText){
     ctx.font='12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
     var mt='型号: '+modelText;
@@ -173,20 +177,16 @@ async function detect(){
     var preds=await model.detect(img);
     hideOverlay();
     if(preds.length===0){toast('未识别到主体，请手动框选');$('detectName').textContent='未识别到';return;}
-    // 取置信度最高的
     var best=preds[0];
     for(var i=1;i<preds.length;i++){if(preds[i].score>best.score)best=preds[i];}
     var bb=best.bbox;
     box={x:bb[0]/img.width,y:bb[1]/img.height,w:bb[2]/img.width,h:bb[3]/img.height};
-    // 裁剪一下别太贴边
     box.x=Math.max(0.02,box.x-0.02);box.y=Math.max(0.02,box.y-0.02);
     box.w=Math.min(0.98-box.x,box.w+0.04);box.h=Math.min(0.98-box.y,box.h+0.04);
-    var name=best.class;
-    $('detectName').textContent=name+' ('+(best.score*100).toFixed(0)+'%)';
+    $('detectName').textContent=best.class+' ('+(best.score*100).toFixed(0)+'%)';
     render();
   }catch(e){hideOverlay();toast('识别失败，可手动框选');}
 }
-// 交互
 function getPos(e){
   var r=canvas.getBoundingClientRect();
   return {x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};
@@ -194,10 +194,8 @@ function getPos(e){
 canvas.addEventListener('mousedown',function(e){
   var p=getPos(e);
   var bx=box.x,by=box.y,bw=box.w,bh=box.h;
-  // 检查右下角手柄
   var handleR=0.04;
   if(Math.abs(p.x-(bx+bw))<handleR&&Math.abs(p.y-(by+bh))<handleR){drag='resize';return;}
-  // 检查框内
   if(p.x>bx&&p.x<bx+bw&&p.y>by&&p.y<by+bh){drag='move';return;}
 });
 canvas.addEventListener('mousemove',function(e){
@@ -215,7 +213,34 @@ canvas.addEventListener('mousemove',function(e){
 });
 canvas.addEventListener('mouseup',function(){drag=null;});
 canvas.addEventListener('mouseleave',function(){drag=null;});
-// 输入
+function getTouchPos(e){
+  var r=canvas.getBoundingClientRect();
+  var t=e.touches[0]||e.changedTouches[0];
+  return {x:(t.clientX-r.left)/r.width,y:(t.clientY-r.top)/r.height};
+}
+canvas.addEventListener('touchstart',function(e){
+  e.preventDefault();
+  var p=getTouchPos(e);
+  var bx=box.x,by=box.y,bw=box.w,bh=box.h;
+  var handleR=0.05;
+  if(Math.abs(p.x-(bx+bw))<handleR&&Math.abs(p.y-(by+bh))<handleR){drag='resize';return;}
+  if(p.x>bx&&p.x<bx+bw&&p.y>by&&p.y<by+bh){drag='move';return;}
+},{passive:false});
+canvas.addEventListener('touchmove',function(e){
+  e.preventDefault();
+  if(!drag)return;
+  var p=getTouchPos(e);
+  if(drag==='move'){
+    box.x=p.x-box.w/2;box.y=p.y-box.h/2;
+    box.x=Math.max(0,Math.min(1-box.w,box.x));
+    box.y=Math.max(0,Math.min(1-box.h,box.y));
+  }else if(drag==='resize'){
+    box.w=Math.max(0.05,p.x-box.x);box.h=Math.max(0.05,p.y-box.y);
+    box.w=Math.min(1-box.x,box.w);box.h=Math.min(1-box.y,box.h);
+  }
+  render();
+},{passive:false});
+canvas.addEventListener('touchend',function(){drag=null;});
 ['inpL','inpW','inpH'].forEach(function(id){
   $(id).addEventListener('input',function(){
     dims.L=$('inpL').value;dims.W=$('inpW').value;dims.H=$('inpH').value;
@@ -229,12 +254,10 @@ canvas.addEventListener('mouseleave',function(){drag=null;});
 $('inpModel').addEventListener('input',function(){modelText=$('inpModel').value;render();});
 $('inpModel').addEventListener('change',function(){modelText=$('inpModel').value;render();});
 $('unitSel').addEventListener('change',function(){unit=$('unitSel').value;render();});
-// 按钮
 $('btnRescan').addEventListener('click',function(){if(img)detect();});
 $('btnReset').addEventListener('click',function(){box={x:.15,y:.15,w:.7,h:.7};render();});
 $('btnDownload').addEventListener('click',function(){
   if(!img)return;
-  // 高清下载
   var dc=document.createElement('canvas');
   dc.width=img.width;dc.height=img.height;
   var dctx=dc.getContext('2d');
@@ -255,7 +278,6 @@ $('btnDownload').addEventListener('click',function(){
     dctx.strokeStyle='rgba(0,0,0,.15)';dctx.lineWidth=1;dctx.strokeRect(l.x-tw/2-8,l.y-18,tw+16,36);
     dctx.fillStyle='#1c1917';dctx.fillText(l.text,l.x,l.y);
   });
-  // 型号标签：高清版
   if(modelText){
     dctx.font='20px sans-serif';dctx.textAlign='center';dctx.textBaseline='middle';
     var mt='型号: '+modelText;
@@ -265,8 +287,16 @@ $('btnDownload').addEventListener('click',function(){
     dctx.strokeStyle='rgba(0,0,0,.12)';dctx.lineWidth=1;dctx.strokeRect(mx-mtw/2-6,my-12,mtw+12,24);
     dctx.fillStyle='#1c1917';dctx.fillText(mt,mx,my);
   }
-  var a=document.createElement('a');a.download='labeled_image.png';a.href=dc.toDataURL('image/png');a.click();
+  var dataUrl=dc.toDataURL('image/png');
+  var isMobile=/iPhone|iPad|Android|Mobile/i.test(navigator.userAgent);
+  if(isMobile){
+    $('previewImg').src=dataUrl;
+    $('previewModal').classList.add('show');
+  }else{
+    var a=document.createElement('a');a.download='labeled_image.png';a.href=dataUrl;a.click();
+  }
 });
+$('pvClose').addEventListener('click',function(){$('previewModal').classList.remove('show');});
 </script>
 </body>
 </html>
