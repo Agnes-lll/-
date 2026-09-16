@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>图片尺寸标注工具</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--p:#7c3aed;--pd:#5b21b6;--pl:#f5f3ff;--bg:#fafaf9;--card:#fff;--t:#1c1917;--tl:#78716c;--bd:#e7e5e4;--r:#e11d48;}
+body{font-family:"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--t);min-height:100vh;}
+.topbar{position:fixed;top:0;left:0;right:0;height:52px;background:linear-gradient(90deg,var(--p),var(--pd));color:#fff;display:flex;align-items:center;padding:0 20px;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,.15);gap:10px;}
+.topbar-logo{font-size:17px;font-weight:800;}
+.topbar-sub{font-size:12px;opacity:.7;border-left:1px solid rgba(255,255,255,.3);padding-left:8px;}
+.content{padding:68px 20px 40px;max-width:1100px;margin:0 auto;}
+.upload-zone{border:2px dashed #d6d3d1;border-radius:16px;padding:48px 20px;text-align:center;cursor:pointer;transition:all .25s;background:var(--card);}
+.upload-zone:hover{border-color:var(--p);background:var(--pl);}
+.upload-zone .icon{font-size:44px;margin-bottom:10px;}
+.upload-zone h3{font-size:16px;font-weight:600;margin-bottom:4px;}
+.upload-zone p{font-size:13px;color:var(--tl);}
+.workspace{display:none;gap:16px;align-items:flex-start;}
+.workspace.show{display:flex;}
+.canvas-box{flex:1;background:var(--card);border-radius:14px;padding:14px;box-shadow:0 1px 6px rgba(0,0,0,.06);border:1px solid var(--bd);}
+#canvas{width:100%;display:block;border-radius:8px;background:#f5f5f4;cursor:crosshair;}
+.canvas-tools{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;}
+.btn{padding:7px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
+.btn-p{background:var(--p);color:#fff;}.btn-p:hover{background:var(--pd);}
+.btn-g{background:var(--pl);color:var(--p);}.btn-g:hover{background:#ede9fe;}
+.side{width:300px;background:var(--card);border-radius:14px;padding:18px;box-shadow:0 1px 6px rgba(0,0,0,.06);border:1px solid var(--bd);flex-shrink:0;}
+.side h3{font-size:15px;font-weight:700;margin-bottom:12px;}
+.detect{background:#fafaf9;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:12px;border:1px solid var(--bd);}
+.detect .label{font-size:11px;color:var(--tl);margin-bottom:2px;}
+.detect .name{font-weight:700;color:var(--p);font-size:15px;}
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:12px;font-weight:600;margin-bottom:5px;}
+.field input,.field select{width:100%;padding:8px 11px;border:1px solid var(--bd);border-radius:9px;font-size:14px;outline:none;transition:border .2s;}
+.field input:focus,.field select:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(124,58,237,.1);}
+.hint{font-size:11px;color:var(--tl);line-height:1.7;margin-top:12px;border-top:1px solid var(--bd);padding-top:10px;}
+.dl-btn{width:100%;margin-top:6px;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:none;align-items:center;justify-content:center;flex-direction:column;color:#fff;gap:14px;}
+.overlay.show{display:flex;}
+.spin{width:40px;height:40px;border:4px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.overlay .msg{font-size:14px;font-weight:600;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1c1917;color:#fff;padding:11px 20px;border-radius:11px;font-size:13px;z-index:3000;display:none;box-shadow:0 8px 24px rgba(0,0,0,.3);}
+.toast.show{display:block;}
+@media(max-width:800px){.workspace{flex-direction:column;}.side{width:100%;}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="topbar-logo">📐 图片尺寸标注</span>
+  <span class="topbar-sub">上传 → 识别 → 标注</span>
+</div>
+<div class="content">
+  <div class="upload-zone" id="upZone">
+    <div class="icon">🖼️</div>
+    <h3>点击或拖拽图片到这里</h3>
+    <p>支持 JPG / PNG / WebP，自动识别主体，可手动微调标注框</p>
+    <input type="file" id="fileInput" accept="image/*" style="display:none">
+  </div>
+  <div class="workspace" id="workspace">
+    <div class="canvas-box">
+      <canvas id="canvas"></canvas>
+      <div class="canvas-tools">
+        <button class="btn btn-p" id="btnRescan">🔄 重新识别</button>
+        <button class="btn btn-g" id="btnReset">↺ 重置标注框</button>
+        <span style="font-size:12px;color:var(--tl);margin-left:auto;">拖框调整位置 · 拖右下角缩放</span>
+      </div>
+    </div>
+    <div class="side">
+      <h3>📏 尺寸标注</h3>
+      <div class="detect"><div class="label">识别结果</div><div class="name" id="detectName">—</div></div>
+      <div class="field"><label>长 (L) — 图上上下方向</label><input type="number" id="inpL" placeholder="如 45" step="0.1"></div>
+      <div class="field"><label>宽 (W) — 图上左右方向</label><input type="number" id="inpW" placeholder="如 30" step="0.1"></div>
+      <div class="field"><label>高 (H) — 标在框旁</label><input type="number" id="inpH" placeholder="如 20" step="0.1"></div>
+      <div class="field"><label>单位</label><select id="unitSel"><option value="cm">cm</option><option value="mm">mm</option><option value="in">inch</option></select></div>
+      <button class="btn btn-p dl-btn" id="btnDownload">⬇️ 下载标注图</button>
+      <div class="hint">💡 提示：<br>1. 上传后自动识别主体并框选<br>2. 拖框移动，拖右下角圆点缩放<br>3. 输入长宽高，标注自动画在图上<br>4. 点击下载保存成品</div>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="overlay"><div class="spin"></div><div class="msg" id="overlayMsg">正在加载识别模型…</div></div>
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+<script>
+function $(id){return document.getElementById(id);}
+var toastT;
+function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show');},2500);}
+var img=null,box={x:.15,y:.15,w:.7,h:.7},model=null,canvas=$('canvas'),ctx=null,drag=null,dims={L:'',W:'',H:''},unit='cm';
+var DPR=window.devicePixelRatio||1;
+function showOverlay(m){$('overlayMsg').textContent=m;$('overlay').classList.add('show');}
+function hideOverlay(){$('overlay').classList.remove('show');}
+async function loadModel(){
+  showOverlay('正在加载识别模型…（首次约需10秒）');
+  try{model=await cocoSsd.load();hideOverlay();}catch(e){hideOverlay();toast('模型加载失败，可手动框选');}
+}
+loadModel();
+$('upZone').addEventListener('click',function(){$('fileInput').click();});
+$('fileInput').addEventListener('change',function(e){handleFile(e.target.files[0]);});
+document.addEventListener('dragover',function(e){e.preventDefault();});
+document.addEventListener('drop',function(e){e.preventDefault();if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+function handleFile(f){
+  if(!f||!f.type.startsWith('image/'))return;
+  var r=new FileReader();
+  r.onload=function(ev){var im=new Image();im.onload=function(){img=im;setupCanvas();$('workspace').classList.add('show');$('upZone').style.display='none';render();detect();};im.src=ev.target.result;};
+  r.readAsDataURL(f);
+}
+function setupCanvas(){
+  var maxW=Math.min(800,img.width);
+  var scale=maxW/img.width;
+  canvas.width=maxW*DPR;canvas.height=img.height*scale*DPR;
+  canvas.style.width=maxW+'px';canvas.style.height=(img.height*scale)+'px';
+  ctx=canvas.getContext('2d');ctx.scale(DPR,DPR);
+  box={x:.15,y:.15,w:.7,h:.7};
+}
+function render(){
+  if(!img||!ctx)return;
+  var cw=canvas.width/DPR,ch=canvas.height/DPR;
+  ctx.clearRect(0,0,cw,ch);ctx.drawImage(img,0,0,cw,ch);
+  var bx=box.x*cw,by=box.y*cw*0+box.y*ch,bw=box.w*cw,bh=box.h*ch;
+  ctx.fillStyle='rgba(124,58,237,.06)';ctx.fillRect(bx,by,bw,bh);
+  ctx.strokeStyle='#7c3aed';ctx.lineWidth=2.5;ctx.strokeRect(bx,by,bw,bh);
+  // 角标
+  [[bx,by],[bx+bw,by],[bx,by+bh],[bx+bw,by+bh]].forEach(function(c){ctx.fillStyle='#fff';ctx.fillRect(c[0]-4,c[1]-4,8,8);ctx.strokeStyle='#7c3aed';ctx.lineWidth=1.5;ctx.strokeRect(c[0]-4,c[1]-4,8,8);});
+  // 右下角手柄
+  ctx.fillStyle='#7c3aed';ctx.beginPath();ctx.arc(bx+bw,by+bh,7,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+  // 尺寸标注
+  drawDims(cw,ch);
+}
+function drawDims(cw,ch){
+  var bx=box.x*cw,by=box.y*ch,bw=box.w*cw,bh=box.h*ch;
+  ctx.font='bold 16px sans-serif';ctx.textBaseline='middle';ctx.textAlign='center';
+  var items=[
+    {text:dims.L?'L: '+dims.L+unit:'',x:bx+bw/2,y:by-18,side:'top'},
+    {text:dims.W?dims.W+unit+'  W':'',x:bx+bw+30,y:by+bh/2,side:'right'},
+    {text:dims.H?'H: '+dims.H+unit:'',x:bx-30,y:by+bh/2,side:'left'}
+  ];
+  items.forEach(function(l){
+    if(!l.text)return;
+    var tw=ctx.measureText(l.text).width;
+    // 引线
+    ctx.strokeStyle='#e11d48';ctx.lineWidth=1.5;ctx.setLineDash([]);
+    ctx.beginPath();
+    if(l.side==='top'){ctx.moveTo(bx+bw*0.3,by);ctx.lineTo(bx+bw*0.3,by-12);ctx.lineTo(l.x-tw/2-4,l.y);}
+    else if(l.side==='right'){ctx.moveTo(bx+bw,by+bh*0.3);ctx.lineTo(bx+bw+12,by+bh*0.3);ctx.lineTo(l.x-tw/2-4,l.y);}
+    else{ctx.moveTo(bx,by+bh*0.3);ctx.lineTo(bx-12,by+bh*0.3);ctx.lineTo(l.x+tw/2+4,l.y);}
+    ctx.stroke();
+    // 标签底色
+    ctx.fillStyle='#e11d48';ctx.fillRect(l.x-tw/2-5,l.y-12,tw+10,24);
+    ctx.fillStyle='#fff';ctx.fillText(l.text,l.x,l.y);
+  });
+}
+async function detect(){
+  if(!model){return;}
+  showOverlay('正在识别主体…');
+  try{
+    var preds=await model.detect(img);
+    hideOverlay();
+    if(preds.length===0){toast('未识别到主体，请手动框选');$('detectName').textContent='未识别到';return;}
+    // 取置信度最高的
+    var best=preds[0];
+    for(var i=1;i<preds.length;i++){if(preds[i].score>best.score)best=preds[i];}
+    var bb=best.bbox; // [x,y,w,h] 像素
+    box={x:bb[0]/img.width,y:bb[1]/img.height,w:bb[2]/img.width,h:bb[3]/img.height};
+    // 裁剪一下别太贴边
+    box.x=Math.max(0.02,box.x-0.02);box.y=Math.max(0.02,box.y-0.02);
+    box.w=Math.min(0.98-box.x,box.w+0.04);box.h=Math.min(0.98-box.y,box.h+0.04);
+    var name=best.class;
+    $('detectName').textContent=name+' ('+(best.score*100).toFixed(0)+'%)';
+    render();
+  }catch(e){hideOverlay();toast('识别失败，可手动框选');}
+}
+// 交互
+function getPos(e){
+  var r=canvas.getBoundingClientRect();
+  return {x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};
+}
+canvas.addEventListener('mousedown',function(e){
+  var p=getPos(e);
+  var cw=1,ch=1;
+  var bx=box.x,by=box.y,bw=box.w,bh=box.h;
+  // 检查右下角手柄
+  var handleR=0.04;
+  if(Math.abs(p.x-(bx+bw))<handleR&&Math.abs(p.y-(by+bh))<handleR){drag='resize';return;}
+  // 检查框内
+  if(p.x>bx&&p.x<bx+bw&&p.y>by&&p.y<by+bh){drag='move';return;}
+});
+canvas.addEventListener('mousemove',function(e){
+  if(!drag)return;
+  var p=getPos(e);
+  if(drag==='move'){
+    box.x=p.x-box.w/2;box.y=p.y-box.h/2;
+    box.x=Math.max(0,Math.min(1-box.w,box.x));
+    box.y=Math.max(0,Math.min(1-box.h,box.y));
+  }else if(drag==='resize'){
+    box.w=Math.max(0.05,p.x-box.x);box.h=Math.max(0.05,p.y-box.y);
+    box.w=Math.min(1-box.x,box.w);box.h=Math.min(1-box.y,box.h);
+  }
+  render();
+});
+canvas.addEventListener('mouseup',function(){drag=null;});
+canvas.addEventListener('mouseleave',function(){drag=null;});
+// 输入
+['inpL','inpW','inpH'].forEach(function(id){
+  $(id).addEventListener('input',function(){
+    dims.L=$('inpL').value;dims.W=$('inpW').value;dims.H=$('inpH').value;render();
+  });
+});
+$('unitSel').addEventListener('change',function(){unit=$('unitSel').value;render();});
+// 按钮
+$('btnRescan').addEventListener('click',function(){if(img)detect();});
+$('btnReset').addEventListener('click',function(){box={x:.15,y:.15,w:.7,h:.7};render();});
+$('btnDownload').addEventListener('click',function(){
+  if(!img)return;
+  // 高清下载
+  var dc=document.createElement('canvas');
+  var scale=2;
+  dc.width=img.width;dc.height=img.height;
+  var dctx=dc.getContext('2d');
+  dctx.drawImage(img,0,0);
+  var bx=box.x*img.width,by=box.y*img.height,bw=box.w*img.width,bh=box.h*img.height;
+  dctx.fillStyle='rgba(124,58,237,.06)';dctx.fillRect(bx,by,bw,bh);
+  dctx.strokeStyle='#7c3aed';dctx.lineWidth=4;dctx.strokeRect(bx,by,bw,bh);
+  dctx.font='bold 28px sans-serif';dctx.textBaseline='middle';dctx.textAlign='center';
+  var items=[
+    {text:dims.L?'L: '+dims.L+unit:'',x:bx+bw/2,y:by-30},
+    {text:dims.W?dims.W+unit+'  W':'',x:bx+bw+50,y:by+bh/2},
+    {text:dims.H?'H: '+dims.H+unit:'',x:bx-50,y:by+bh/2}
+  ];
+  items.forEach(function(l){
+    if(!l.text)return;
+    var tw=dctx.measureText(l.text).width;
+    dctx.fillStyle='#e11d48';dctx.fillRect(l.x-tw/2-8,l.y-18,tw+16,36);
+    dctx.fillStyle='#fff';dctx.fillText(l.text,l.x,l.y);
+  });
+  var a=document.createElement('a');a.download='labeled_image.png';a.href=dc.toDataURL('image/png');a.click();
+});
+</script>
+<script type="text/javascript" src="/accessproxy_statics/h5_fp.js" defer></script>
+<script type="text/javascript" src="/accessproxy_statics/wm.js" defer></script>
+</body>
+</html>
