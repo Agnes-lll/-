@@ -6,297 +6,245 @@
 <title>图片尺寸标注工具</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-:root{--p:#7c3aed;--pd:#5b21b6;--pl:#f5f3ff;--bg:#fafaf9;--card:#fff;--t:#1c1917;--tl:#78716c;--bd:#e7e5e4;--r:#e11d48;}
+:root{--p:#7c3aed;--pd:#5b21b6;--pl:#f5f3ff;--bg:#fafaf9;--card:#fff;--t:#1c1917;--tl:#78716c;--bd:#e7e5e4;}
 body{font-family:"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--t);min-height:100vh;}
-.topbar{position:fixed;top:0;left:0;right:0;height:52px;background:linear-gradient(90deg,var(--p),var(--pd));color:#fff;display:flex;align-items:center;padding:0 20px;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,.15);gap:10px;}
-.topbar-logo{font-size:17px;font-weight:800;}
-.topbar-sub{font-size:12px;opacity:.7;border-left:1px solid rgba(255,255,255,.3);padding-left:8px;}
-.content{padding:68px 20px 40px;max-width:1100px;margin:0 auto;}
-.upload-zone{border:2px dashed #d6d3d1;border-radius:16px;padding:48px 20px;text-align:center;cursor:pointer;transition:all .25s;background:var(--card);}
-.upload-zone:hover{border-color:var(--p);background:var(--pl);}
-.upload-zone .icon{font-size:44px;margin-bottom:10px;}
-.upload-zone h3{font-size:16px;font-weight:600;margin-bottom:4px;}
-.upload-zone p{font-size:13px;color:var(--tl);}
-.workspace{display:none;gap:16px;align-items:flex-start;}
-.workspace.show{display:flex;}
-.canvas-box{flex:1;background:var(--card);border-radius:14px;padding:14px;box-shadow:0 1px 6px rgba(0,0,0,.06);border:1px solid var(--bd);}
-#canvas{width:100%;display:block;border-radius:8px;background:#f5f5f4;cursor:crosshair;}
-.canvas-tools{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;}
-.btn{padding:7px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
-.btn-p{background:var(--p);color:#fff;}.btn-p:hover{background:var(--pd);}
-.btn-g{background:var(--pl);color:var(--p);}.btn-g:hover{background:#ede9fe;}
-.side{width:300px;background:var(--card);border-radius:14px;padding:18px;box-shadow:0 1px 6px rgba(0,0,0,.06);border:1px solid var(--bd);flex-shrink:0;}
-.side h3{font-size:15px;font-weight:700;margin-bottom:12px;}
-.detect{background:#fafaf9;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:12px;border:1px solid var(--bd);}
-.detect .label{font-size:11px;color:var(--tl);margin-bottom:2px;}
-.detect .name{font-weight:700;color:var(--p);font-size:15px;}
-.field{margin-bottom:12px;}
-.field label{display:block;font-size:12px;font-weight:600;margin-bottom:5px;}
-.field input,.field select{width:100%;padding:8px 11px;border:1px solid var(--bd);border-radius:9px;font-size:14px;outline:none;transition:border .2s;}
-.field input:focus,.field select:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(124,58,237,.1);}
-.hint{font-size:11px;color:var(--tl);line-height:1.7;margin-top:12px;border-top:1px solid var(--bd);padding-top:10px;}
-.dl-btn{width:100%;margin-top:6px;}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:none;align-items:center;justify-content:center;flex-direction:column;color:#fff;gap:14px;}
-.overlay.show{display:flex;}
-.spin{width:40px;height:40px;border:4px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite;}
-@keyframes sp{to{transform:rotate(360deg);}}
-.overlay .msg{font-size:14px;font-weight:600;}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1c1917;color:#fff;padding:11px 20px;border-radius:11px;font-size:13px;z-index:3000;display:none;box-shadow:0 8px 24px rgba(0,0,0,.3);}
-.toast.show{display:block;}
-@media(max-width:800px){.workspace{flex-direction:column;}.side{width:100%;}}
-#previewModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:5000;align-items:center;justify-content:center;flex-direction:column;padding:20px;}
-#previewModal.show{display:flex;}
-#previewImg{max-width:100%;max-height:75vh;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.4);}
-#previewModal .pv-tip{color:#fff;font-size:13px;margin-top:16px;text-align:center;}
-#previewModal .pv-close{margin-top:14px;padding:8px 24px;border-radius:10px;border:none;background:#fff;color:#1c1917;font-size:14px;font-weight:600;cursor:pointer;}
+.bar{position:fixed;top:0;left:0;right:0;height:48px;background:linear-gradient(90deg,var(--p),var(--pd));color:#fff;display:flex;align-items:center;padding:0 16px;z-index:999;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+.bar b{font-size:16px;}
+.bar span{font-size:11px;opacity:.65;border-left:1px solid rgba(255,255,255,.25);padding-left:8px;}
+.main{padding:60px 16px 32px;max-width:960px;margin:0 auto;}
+.up{border:2px dashed #d6d3d1;border-radius:14px;padding:44px 16px;text-align:center;cursor:pointer;background:var(--card);transition:.2s;}
+.up:hover{border-color:var(--p);background:var(--pl);}
+.up i{font-size:40px;display:block;margin-bottom:8px;}
+.up h3{font-size:15px;font-weight:600;}
+.up p{font-size:12px;color:var(--tl);margin-top:4px;}
+.ws{display:none;gap:14px;align-items:flex-start;}
+.ws.on{display:flex;}
+.cv{flex:1;background:var(--card);border-radius:12px;padding:12px;border:1px solid var(--bd);}
+.cv canvas{width:100%;display:block;border-radius:6px;background:#f5f5f4;touch-action:none;}
+.cv .tip{font-size:11px;color:var(--tl);margin-top:8px;}
+.sd{width:260px;background:var(--card);border-radius:12px;padding:16px;border:1px solid var(--bd);flex-shrink:0;}
+.sd h3{font-size:14px;font-weight:700;margin-bottom:10px;}
+.f{margin-bottom:10px;}
+.f label{display:block;font-size:11px;font-weight:600;margin-bottom:4px;}
+.f input{width:100%;padding:7px 10px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;}
+.f input:focus{border-color:var(--p);box-shadow:0 0 0 2px rgba(124,58,237,.12);}
+.ll{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+.lr{display:flex;gap:5px;align-items:center;}
+.lr input{flex:1;min-width:0;}
+.lr .del{padding:5px 8px;border:1px solid var(--bd);background:#fff;border-radius:6px;cursor:pointer;color:#a8a29e;font-size:12px;}
+.lr.act input{border-color:var(--p);box-shadow:0 0 0 2px rgba(124,58,237,.12);}
+.btn{display:block;width:100%;padding:8px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.15s;text-align:center;}
+.bp{background:var(--p);color:#fff;margin-bottom:8px;}.bp:hover{background:var(--pd);}
+.bg{background:var(--pl);color:var(--p);margin-bottom:8px;}.bg:hover{background:#ede9fe;}
+.hint{font-size:10px;color:var(--tl);line-height:1.6;margin-top:8px;border-top:1px solid var(--bd);padding-top:8px;}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1c1917;color:#fff;padding:10px 18px;border-radius:10px;font-size:12px;z-index:9000;display:none;}
+.toast.on{display:block;}
+#pm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:8000;align-items:center;justify-content:center;flex-direction:column;padding:16px;}
+#pm.on{display:flex;}
+#pm img{max-width:100%;max-height:70vh;border-radius:10px;}
+#pm .pt{color:#fff;font-size:12px;margin-top:14px;text-align:center;line-height:1.6;}
+#pm .pc{margin-top:12px;padding:7px 20px;border-radius:8px;border:none;background:#fff;color:#1c1917;font-size:13px;font-weight:600;cursor:pointer;}
+@media(max-width:720px){.ws{flex-direction:column;}.sd{width:100%;}}
 </style>
 </head>
 <body>
-<div class="topbar">
-  <span class="topbar-logo">📐 图片尺寸标注</span>
-  <span class="topbar-sub">上传 → 识别 → 标注</span>
-</div>
-<div class="content">
-  <div class="upload-zone" id="upZone">
-    <div class="icon">🖼️</div>
-    <h3>点击或拖拽图片到这里</h3>
-    <p>支持 JPG / PNG / WebP，自动识别主体，可手动微调标注框</p>
-    <input type="file" id="fileInput" accept="image/*" style="display:none">
+<div class="bar"><b>📐 尺寸标注</b><span>拖线标注 · 长按保存</span></div>
+<div class="main">
+  <div class="up" id="up">
+    <i>🖼️</i>
+    <h3>点击或拖拽上传图片</h3>
+    <p>JPG / PNG / WebP</p>
+    <input type="file" id="fi" accept="image/*" style="display:none">
   </div>
-  <div class="workspace" id="workspace">
-    <div class="canvas-box">
-      <canvas id="canvas"></canvas>
-      <div class="canvas-tools">
-        <button class="btn btn-p" id="btnRescan">🔄 重新识别</button>
-        <button class="btn btn-g" id="btnReset">↺ 重置标注框</button>
-        <span style="font-size:12px;color:var(--tl);margin-left:auto;">拖框调整位置 · 拖右下角缩放</span>
-      </div>
+  <div class="ws" id="ws">
+    <div class="cv">
+      <canvas id="cv"></canvas>
+      <div class="tip">点击右侧「＋ 尺寸线」后，在此图上按住拖动绘制</div>
     </div>
-    <div class="side">
-      <h3>📏 尺寸标注</h3>
-      <div class="detect"><div class="label">识别结果</div><div class="name" id="detectName">—</div></div>
-      <div class="field"><label>长 (L) — 图上上下方向</label><input type="number" id="inpL" placeholder="如 45" step="0.1"></div>
-      <div class="field"><label>宽 (W) — 图上左右方向</label><input type="number" id="inpW" placeholder="如 30" step="0.1"></div>
-      <div class="field"><label>高 (H) — 标在框旁</label><input type="number" id="inpH" placeholder="如 20" step="0.1"></div>
-      <div class="field"><label>型号 — 标在右下角</label><input type="text" id="inpModel" placeholder="如 SKU-A001"></div>
-      <div class="field"><label>单位</label><select id="unitSel"><option value="cm">cm</option><option value="mm">mm</option><option value="m">m</option><option value="in">inch</option></select></div>
-      <button class="btn btn-p dl-btn" id="btnDownload">⬇️ 下载标注图</button>
-      <div class="hint">💡 提示：<br>1. 上传后自动识别主体并框选<br>2. 拖框移动，拖右下角圆点缩放<br>3. 输入长宽高，标注自动画在图上<br>4. 点击下载保存成品</div>
+    <div class="sd">
+      <h3>📏 标注</h3>
+      <div class="ll" id="ll"></div>
+      <button class="btn bg" id="addL">＋ 尺寸线</button>
+      <div class="f"><label>型号（右下角）</label><input type="text" id="mdl" placeholder="如 SKU-A001"></div>
+      <button class="btn bp" id="dl">生成并保存图片</button>
+      <div class="hint">1. 点「＋尺寸线」→ 图片上拖动<br>2. 右侧填数字，可加多条线<br>3. 填型号→显示在右下角<br>4. 手机：生成后长按图保存</div>
     </div>
   </div>
 </div>
-<div class="overlay" id="overlay"><div class="spin"></div><div class="msg" id="overlayMsg">正在加载识别模型…</div></div>
-<div class="toast" id="toast"></div>
-<div id="previewModal">
-  <img id="previewImg" alt="标注预览">
-  <div class="pv-tip">📱 长按图片可以保存到相册<br>💻 右键图片可以另存为</div>
-  <button class="pv-close" id="pvClose">关闭</button>
+<div class="toast" id="tt"></div>
+<div id="pm">
+  <img id="pi" alt="预览">
+  <div class="pt">📱 长按图片保存到相册<br>💻 右键另存为</div>
+  <button class="pc" id="px">关闭</button>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
 <script>
-function $(id){return document.getElementById(id);}
-var toastT;
-function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show');},2500);}
-var img=null,box={x:.15,y:.15,w:.7,h:.7},model=null,canvas=$('canvas'),ctx=null,drag=null,dims={L:'',W:'',H:''},modelText='',unit='cm';
+(function(){
+var $=function(id){return document.getElementById(id);};
+var img=null,canvas=$('cv'),ctx=null,lines=[],act=-1,drawMode=false,dragType='',mdlText='';
 var DPR=window.devicePixelRatio||1;
-function showOverlay(m){$('overlayMsg').textContent=m;$('overlay').classList.add('show');}
-function hideOverlay(){$('overlay').classList.remove('show');}
-async function loadModel(){
-  showOverlay('正在加载识别模型…（首次约需10秒）');
-  try{model=await cocoSsd.load();hideOverlay();}catch(e){hideOverlay();toast('模型加载失败，可手动框选');}
-}
-loadModel();
-$('upZone').addEventListener('click',function(){$('fileInput').click();});
-$('fileInput').addEventListener('change',function(e){handleFile(e.target.files[0]);});
-document.addEventListener('dragover',function(e){e.preventDefault();});
-document.addEventListener('drop',function(e){e.preventDefault();if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
-function handleFile(f){
-  if(!f||!f.type.startsWith('image/'))return;
+var ttT;
+function toast(m){var t=$('tt');t.textContent=m;t.classList.add('on');clearTimeout(ttT);ttT=setTimeout(function(){t.classList.remove('on');},2000);}
+
+// 上传
+$('up').onclick=function(){$('fi').click();};
+$('fi').onchange=function(e){if(e.target.files[0])loadImg(e.target.files[0]);};
+document.ondragover=function(e){e.preventDefault();};
+document.ondrop=function(e){e.preventDefault();if(e.dataTransfer.files[0])loadImg(e.dataTransfer.files[0]);};
+
+function loadImg(f){
+  if(!f.type.startsWith('image/'))return;
   var r=new FileReader();
-  r.onload=function(ev){var im=new Image();im.onload=function(){img=im;setupCanvas();$('workspace').classList.add('show');$('upZone').style.display='none';render();detect();};im.src=ev.target.result;};
+  r.onload=function(ev){
+    var im=new Image();
+    im.onload=function(){
+      img=im;lines=[];act=-1;mdlText='';$('mdl').value='';
+      initCanvas();$('ws').classList.add('on');$('up').style.display='none';
+      renderList();render();
+    };
+    im.src=ev.target.result;
+  };
   r.readAsDataURL(f);
 }
-function setupCanvas(){
-  var maxW=Math.min(800,img.width);
-  var scale=maxW/img.width;
-  canvas.width=maxW*DPR;canvas.height=img.height*scale*DPR;
-  canvas.style.width=maxW+'px';canvas.style.height=(img.height*scale)+'px';
+
+function initCanvas(){
+  var mw=Math.min(720,img.width),sc=mw/img.width;
+  canvas.width=mw*DPR;canvas.height=img.height*sc*DPR;
+  canvas.style.width=mw+'px';canvas.style.height=(img.height*sc)+'px';
   ctx=canvas.getContext('2d');ctx.scale(DPR,DPR);
-  box={x:.15,y:.15,w:.7,h:.7};
 }
+
 function render(){
   if(!img||!ctx)return;
   var cw=canvas.width/DPR,ch=canvas.height/DPR;
   ctx.clearRect(0,0,cw,ch);ctx.drawImage(img,0,0,cw,ch);
-  var bx=box.x*cw,by=box.y*ch,bw=box.w*cw,bh=box.h*ch;
-  ctx.fillStyle='rgba(255,255,255,.03)';ctx.fillRect(bx,by,bw,bh);
-  ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.5;ctx.strokeRect(bx,by,bw,bh);
-  [[bx,by],[bx+bw,by],[bx,by+bh],[bx+bw,by+bh]].forEach(function(c){
-    ctx.fillStyle='rgba(255,255,255,.6)';ctx.fillRect(c[0]-3,c[1]-3,6,6);
-    ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1;ctx.strokeRect(c[0]-3,c[1]-3,6,6);
-  });
-  ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.arc(bx+bw,by+bh,6,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.5;ctx.stroke();
-  drawDims(cw,ch);
+  drawAllLines(ctx,cw,ch);
 }
-function drawDims(cw,ch){
-  var bx=box.x*cw,by=box.y*ch,bw=box.w*cw,bh=box.h*ch;
-  ctx.font='bold 16px sans-serif';ctx.textBaseline='middle';ctx.textAlign='center';
-  var items=[
-    {text:dims.L?'L: '+dims.L+unit:'',x:bx+bw/2,y:by-18,side:'top'},
-    {text:dims.W?dims.W+unit+'  W':'',x:bx+bw+30,y:by+bh/2,side:'right'},
-    {text:dims.H?'H: '+dims.H+unit:'',x:bx-30,y:by+bh/2,side:'left'}
-  ];
-  items.forEach(function(l){
-    if(!l.text)return;
-    var tw=ctx.measureText(l.text).width;
-    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.setLineDash([]);
-    ctx.beginPath();
-    if(l.side==='top'){ctx.moveTo(bx+bw*0.3,by);ctx.lineTo(bx+bw*0.3,by-12);ctx.lineTo(l.x-tw/2-4,l.y);}
-    else if(l.side==='right'){ctx.moveTo(bx+bw,by+bh*0.3);ctx.lineTo(bx+bw+12,by+bh*0.3);ctx.lineTo(l.x-tw/2-4,l.y);}
-    else{ctx.moveTo(bx,by+bh*0.3);ctx.lineTo(bx-12,by+bh*0.3);ctx.lineTo(l.x+tw/2+4,l.y);}
-    ctx.stroke();
-    ctx.fillStyle='#fff';ctx.fillRect(l.x-tw/2-5,l.y-12,tw+10,24);
-    ctx.strokeStyle='rgba(0,0,0,.15)';ctx.lineWidth=1;ctx.strokeRect(l.x-tw/2-5,l.y-12,tw+10,24);
-    ctx.fillStyle='#1c1917';ctx.fillText(l.text,l.x,l.y);
-  });
-  if(modelText){
-    ctx.font='12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-    var mt='型号: '+modelText;
-    var mtw=ctx.measureText(mt).width;
-    var mx=bx+bw-mtw/2-6,my=by+bh-10;
-    ctx.fillStyle='rgba(255,255,255,.85)';ctx.fillRect(mx-mtw/2-4,my-8,mtw+8,16);
-    ctx.strokeStyle='rgba(0,0,0,.12)';ctx.lineWidth=1;ctx.strokeRect(mx-mtw/2-4,my-8,mtw+8,16);
-    ctx.fillStyle='#1c1917';ctx.fillText(mt,mx,my);
+
+// 箭头
+function arrow(c,x,y,a,s){
+  c.beginPath();c.moveTo(x,y);
+  c.lineTo(x-s*Math.cos(a-0.4),y-s*Math.sin(a-0.4));
+  c.lineTo(x-s*Math.cos(a+0.4),y-s*Math.sin(a+0.4));
+  c.closePath();c.fill();
+}
+
+function drawLine(c,l,w,h){
+  var x1=l.x1*w,y1=l.y1*h,x2=l.x2*w,y2=l.y2*h;
+  var a=Math.atan2(y2-y1,x2-x1),mx=(x1+x2)/2,my=(y1+y2)/2;
+  // 线
+  c.strokeStyle='#fff';c.lineWidth=2;c.setLineDash([]);
+  c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();
+  // 箭头
+  c.fillStyle='#fff';arrow(c,x1,y1,a+Math.PI,9);arrow(c,x2,y2,a,9);
+  // 数字
+  if(l.val!==''){
+    c.font='13px sans-serif';c.textAlign='center';c.textBaseline='middle';
+    var t=String(l.val),tw=c.measureText(t).width;
+    var lx=mx,ly=my-11;
+    c.fillStyle='rgba(255,255,255,.9)';c.fillRect(lx-tw/2-5,ly-9,tw+10,18);
+    c.strokeStyle='rgba(0,0,0,.1)';c.lineWidth=1;c.strokeRect(lx-tw/2-5,ly-9,tw+10,18);
+    c.fillStyle='#1c1917';c.fillText(t,lx,ly);
   }
 }
-async function detect(){
-  if(!model){return;}
-  showOverlay('正在识别主体…');
-  try{
-    var preds=await model.detect(img);
-    hideOverlay();
-    if(preds.length===0){toast('未识别到主体，请手动框选');$('detectName').textContent='未识别到';return;}
-    var best=preds[0];
-    for(var i=1;i<preds.length;i++){if(preds[i].score>best.score)best=preds[i];}
-    var bb=best.bbox;
-    box={x:bb[0]/img.width,y:bb[1]/img.height,w:bb[2]/img.width,h:bb[3]/img.height};
-    box.x=Math.max(0.02,box.x-0.02);box.y=Math.max(0.02,box.y-0.02);
-    box.w=Math.min(0.98-box.x,box.w+0.04);box.h=Math.min(0.98-box.y,box.h+0.04);
-    $('detectName').textContent=best.class+' ('+(best.score*100).toFixed(0)+'%)';
-    render();
-  }catch(e){hideOverlay();toast('识别失败，可手动框选');}
-}
-function getPos(e){
-  var r=canvas.getBoundingClientRect();
-  return {x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};
-}
-canvas.addEventListener('mousedown',function(e){
-  var p=getPos(e);
-  var bx=box.x,by=box.y,bw=box.w,bh=box.h;
-  var handleR=0.04;
-  if(Math.abs(p.x-(bx+bw))<handleR&&Math.abs(p.y-(by+bh))<handleR){drag='resize';return;}
-  if(p.x>bx&&p.x<bx+bw&&p.y>by&&p.y<by+bh){drag='move';return;}
-});
-canvas.addEventListener('mousemove',function(e){
-  if(!drag)return;
-  var p=getPos(e);
-  if(drag==='move'){
-    box.x=p.x-box.w/2;box.y=p.y-box.h/2;
-    box.x=Math.max(0,Math.min(1-box.w,box.x));
-    box.y=Math.max(0,Math.min(1-box.h,box.y));
-  }else if(drag==='resize'){
-    box.w=Math.max(0.05,p.x-box.x);box.h=Math.max(0.05,p.y-box.y);
-    box.w=Math.min(1-box.x,box.w);box.h=Math.min(1-box.y,box.h);
+
+function drawAllLines(c,w,h){
+  lines.forEach(function(l){if(!l.pending)drawLine(c,l,w,h);});
+  if(drawMode&&act>=0&&lines[act]&&!lines[act].pending)drawLine(c,lines[act],w,h);
+  // 型号
+  if(mdlText){
+    c.font='13px sans-serif';c.textAlign='right';c.textBaseline='middle';
+    var mt='型号: '+mdlText,tw=c.measureText(mt).width;
+    var mx=w-10,my=h-10;
+    c.fillStyle='rgba(255,255,255,.9)';c.fillRect(mx-tw-8,my-9,tw+10,18);
+    c.strokeStyle='rgba(0,0,0,.1)';c.lineWidth=1;c.strokeRect(mx-tw-8,my-9,tw+10,18);
+    c.fillStyle='#1c1917';c.fillText(mt,mx-3,my);
   }
-  render();
-});
-canvas.addEventListener('mouseup',function(){drag=null;});
-canvas.addEventListener('mouseleave',function(){drag=null;});
-function getTouchPos(e){
-  var r=canvas.getBoundingClientRect();
-  var t=e.touches[0]||e.changedTouches[0];
-  return {x:(t.clientX-r.left)/r.width,y:(t.clientY-r.top)/r.height};
 }
-canvas.addEventListener('touchstart',function(e){
-  e.preventDefault();
-  var p=getTouchPos(e);
-  var bx=box.x,by=box.y,bw=box.w,bh=box.h;
-  var handleR=0.05;
-  if(Math.abs(p.x-(bx+bw))<handleR&&Math.abs(p.y-(by+bh))<handleR){drag='resize';return;}
-  if(p.x>bx&&p.x<bx+bw&&p.y>by&&p.y<by+bh){drag='move';return;}
-},{passive:false});
-canvas.addEventListener('touchmove',function(e){
-  e.preventDefault();
-  if(!drag)return;
-  var p=getTouchPos(e);
-  if(drag==='move'){
-    box.x=p.x-box.w/2;box.y=p.y-box.h/2;
-    box.x=Math.max(0,Math.min(1-box.w,box.x));
-    box.y=Math.max(0,Math.min(1-box.h,box.y));
-  }else if(drag==='resize'){
-    box.w=Math.max(0.05,p.x-box.x);box.h=Math.max(0.05,p.y-box.y);
-    box.w=Math.min(1-box.x,box.w);box.h=Math.min(1-box.y,box.h);
-  }
-  render();
-},{passive:false});
-canvas.addEventListener('touchend',function(){drag=null;});
-['inpL','inpW','inpH'].forEach(function(id){
-  $(id).addEventListener('input',function(){
-    dims.L=$('inpL').value;dims.W=$('inpW').value;dims.H=$('inpH').value;
-    render();
+
+// 线列表
+function renderList(){
+  var el=$('ll');el.innerHTML='';
+  lines.forEach(function(l,i){
+    var d=document.createElement('div');d.className='lr'+(i===act?' act':'');
+    d.innerHTML='<input type="number" step="any" placeholder="尺寸" value="'+(l.val||'')+'"><span class="del">✕</span>';
+    d.querySelector('input').oninput=function(){l.val=this.value;render();};
+    d.querySelector('.del').onclick=function(){lines.splice(i,1);if(act>=lines.length)act=-1;renderList();render();};
+    d.querySelector('input').onfocus=function(){act=i;markActive();};
+    el.appendChild(d);
   });
-  $(id).addEventListener('change',function(){
-    dims.L=$('inpL').value;dims.W=$('inpW').value;dims.H=$('inpH').value;
-    render();
-  });
-});
-$('inpModel').addEventListener('input',function(){modelText=$('inpModel').value;render();});
-$('inpModel').addEventListener('change',function(){modelText=$('inpModel').value;render();});
-$('unitSel').addEventListener('change',function(){unit=$('unitSel').value;render();});
-$('btnRescan').addEventListener('click',function(){if(img)detect();});
-$('btnReset').addEventListener('click',function(){box={x:.15,y:.15,w:.7,h:.7};render();});
-$('btnDownload').addEventListener('click',function(){
+}
+function markActive(){
+  var rows=$('ll').children;
+  for(var i=0;i<rows.length;i++){rows[i].className='lr'+(i===act?' act':'');}
+}
+
+$('addL').onclick=function(){
+  drawMode=true;act=lines.length;
+  lines.push({x1:0,y1:0,x2:0,y2:0,val:'',pending:true});
+  renderList();render();toast('在图片上按住拖动绘制');
+};
+
+// 坐标
+function cpos(e){var r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};}
+function tpos(e){var t=e.touches[0]||e.changedTouches[0];var r=canvas.getBoundingClientRect();return{x:(t.clientX-r.left)/r.width,y:(t.clientY-r.top)/r.height};}
+
+// 鼠标
+canvas.onmousedown=function(e){
+  if(!drawMode||act<0)return;
+  var p=cpos(e);lines[act].x1=p.x;lines[act].y1=p.y;lines[act].x2=p.x;lines[act].y2=p.y;
+  lines[act].pending=false;
+  dragType='line';e.preventDefault();
+};
+canvas.onmousemove=function(e){
+  if(dragType!=='line')return;
+  var p=cpos(e);lines[act].x2=clamp(p.x);lines[act].y2=clamp(p.y);render();
+};
+canvas.onmouseup=function(){if(dragType==='line'){dragType='';drawMode=false;render();}};
+canvas.onmouseleave=function(){if(dragType==='line'){dragType='';drawMode=false;render();}};
+
+// 触摸
+canvas.ontouchstart=function(e){
+  if(!drawMode||act<0)return;e.preventDefault();
+  var p=tpos(e);lines[act].x1=p.x;lines[act].y1=p.y;lines[act].x2=p.x;lines[act].y2=p.y;
+  lines[act].pending=false;
+  dragType='line';
+};
+canvas.ontouchmove=function(e){
+  if(dragType!=='line')return;e.preventDefault();
+  var p=tpos(e);lines[act].x2=clamp(p.x);lines[act].y2=clamp(p.y);render();
+};
+canvas.ontouchend=function(){if(dragType==='line'){dragType='';drawMode=false;render();}};
+
+function clamp(v){return Math.max(0,Math.min(1,v));}
+
+// 型号
+$('mdl').oninput=function(){mdlText=this.value;render();};
+
+// 下载
+$('dl').onclick=function(){
   if(!img)return;
-  var dc=document.createElement('canvas');
-  dc.width=img.width;dc.height=img.height;
-  var dctx=dc.getContext('2d');
-  dctx.drawImage(img,0,0);
-  var bx=box.x*img.width,by=box.y*img.height,bw=box.w*img.width,bh=box.h*img.height;
-  dctx.fillStyle='rgba(255,255,255,.03)';dctx.fillRect(bx,by,bw,bh);
-  dctx.strokeStyle='rgba(255,255,255,.6)';dctx.lineWidth=2;dctx.strokeRect(bx,by,bw,bh);
-  dctx.font='bold 28px sans-serif';dctx.textBaseline='middle';dctx.textAlign='center';
-  var items=[
-    {text:dims.L?'L: '+dims.L+unit:'',x:bx+bw/2,y:by-30},
-    {text:dims.W?dims.W+unit+'  W':'',x:bx+bw+50,y:by+bh/2},
-    {text:dims.H?'H: '+dims.H+unit:'',x:bx-50,y:by+bh/2}
-  ];
-  items.forEach(function(l){
-    if(!l.text)return;
-    var tw=dctx.measureText(l.text).width;
-    dctx.fillStyle='#fff';dctx.fillRect(l.x-tw/2-8,l.y-18,tw+16,36);
-    dctx.strokeStyle='rgba(0,0,0,.15)';dctx.lineWidth=1;dctx.strokeRect(l.x-tw/2-8,l.y-18,tw+16,36);
-    dctx.fillStyle='#1c1917';dctx.fillText(l.text,l.x,l.y);
-  });
-  if(modelText){
-    dctx.font='20px sans-serif';dctx.textAlign='center';dctx.textBaseline='middle';
-    var mt='型号: '+modelText;
-    var mtw=dctx.measureText(mt).width;
-    var mx=bx+bw-mtw/2-10,my=by+bh-16;
-    dctx.fillStyle='rgba(255,255,255,.85)';dctx.fillRect(mx-mtw/2-6,my-12,mtw+12,24);
-    dctx.strokeStyle='rgba(0,0,0,.12)';dctx.lineWidth=1;dctx.strokeRect(mx-mtw/2-6,my-12,mtw+12,24);
-    dctx.fillStyle='#1c1917';dctx.fillText(mt,mx,my);
-  }
-  var dataUrl=dc.toDataURL('image/png');
+  var dc=document.createElement('canvas');dc.width=img.width;dc.height=img.height;
+  var dctx=dc.getContext('2d');dctx.drawImage(img,0,0);
+  drawAllLines(dctx,dc.width,dc.height);
   var isMobile=/iPhone|iPad|Android|Mobile/i.test(navigator.userAgent);
-  if(isMobile){
-    $('previewImg').src=dataUrl;
-    $('previewModal').classList.add('show');
-  }else{
-    var a=document.createElement('a');a.download='labeled_image.png';a.href=dataUrl;a.click();
-  }
-});
-$('pvClose').addEventListener('click',function(){$('previewModal').classList.remove('show');});
+  // 用 Blob 下载，避免 data URL 超 2MB 被浏览器拦截
+  dc.toBlob(function(blob){
+    if(!blob){toast('生成失败，请重试');return;}
+    var url=URL.createObjectURL(blob);
+    if(isMobile){
+      $('pi').src=url;$('pm').classList.add('on');
+    }else{
+      var a=document.createElement('a');
+      a.download='labeled.png';a.href=url;
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url);},2000);
+      toast('已开始下载');
+    }
+  },'image/png');
+};
+$('px').onclick=function(){$('pm').classList.remove('on');};
+
+})();
 </script>
 </body>
 </html>
