@@ -140,7 +140,11 @@ function drawLine(c,l,w,h){
   if(l.val!==''){
     c.font='13px sans-serif';c.textAlign='center';c.textBaseline='middle';
     var t=String(l.val),tw=c.measureText(t).width;
-    var lx=mx,ly=my-17;
+    // 沿线的法线方向偏移，任何角度（横/竖/斜）都不压线
+    var nx=-Math.sin(a),ny=Math.cos(a);
+    if(ny<0){nx=-nx;ny=-ny;}            // 优先偏移到线的上方
+    if(Math.abs(ny)<0.12){nx=Math.abs(nx);ny=0;} // 竖线时偏移到右侧
+    var lx=mx+nx*22,ly=my+ny*22;
     c.fillStyle='rgba(255,255,255,.9)';c.fillRect(lx-tw/2-5,ly-9,tw+10,18);
     c.strokeStyle='rgba(0,0,0,.1)';c.lineWidth=1;c.strokeRect(lx-tw/2-5,ly-9,tw+10,18);
     c.fillStyle='#1c1917';c.fillText(t,lx,ly);
@@ -152,12 +156,12 @@ function drawAllLines(c,w,h){
   if(drawMode&&act>=0&&lines[act]&&!lines[act].pending)drawLine(c,lines[act],w,h);
   // 型号
   if(mdlText){
-    c.font='bold 20px sans-serif';c.textAlign='right';c.textBaseline='middle';
+    c.font='bold 30px sans-serif';c.textAlign='right';c.textBaseline='middle';
     var mt='型号: '+mdlText,tw=c.measureText(mt).width;
-    var mx=w-12,my=h-14;
-    c.fillStyle='rgba(255,255,255,.95)';c.fillRect(mx-tw-10,my-12,tw+10,26);
-    c.strokeStyle='rgba(0,0,0,.15)';c.lineWidth=1.5;c.strokeRect(mx-tw-10,my-12,tw+10,26);
-    c.fillStyle='#1c1917';c.fillText(mt,mx-3,my);
+    var mx=w-14,my=h-21;
+    c.fillStyle='rgba(255,255,255,.95)';c.fillRect(mx-tw-12,my-21,tw+12,42);
+    c.strokeStyle='rgba(0,0,0,.15)';c.lineWidth=1.5;c.strokeRect(mx-tw-12,my-21,tw+12,42);
+    c.fillStyle='#1c1917';c.fillText(mt,mx-4,my);
   }
 }
 
