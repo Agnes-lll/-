@@ -140,7 +140,7 @@ function drawLine(c,l,w,h){
   if(l.val!==''){
     c.font='13px sans-serif';c.textAlign='center';c.textBaseline='middle';
     var t=String(l.val),tw=c.measureText(t).width;
-    var lx=mx,ly=my-11;
+    var lx=mx,ly=my-17;
     c.fillStyle='rgba(255,255,255,.9)';c.fillRect(lx-tw/2-5,ly-9,tw+10,18);
     c.strokeStyle='rgba(0,0,0,.1)';c.lineWidth=1;c.strokeRect(lx-tw/2-5,ly-9,tw+10,18);
     c.fillStyle='#1c1917';c.fillText(t,lx,ly);
@@ -152,11 +152,11 @@ function drawAllLines(c,w,h){
   if(drawMode&&act>=0&&lines[act]&&!lines[act].pending)drawLine(c,lines[act],w,h);
   // 型号
   if(mdlText){
-    c.font='13px sans-serif';c.textAlign='right';c.textBaseline='middle';
+    c.font='bold 20px sans-serif';c.textAlign='right';c.textBaseline='middle';
     var mt='型号: '+mdlText,tw=c.measureText(mt).width;
-    var mx=w-10,my=h-10;
-    c.fillStyle='rgba(255,255,255,.9)';c.fillRect(mx-tw-8,my-9,tw+10,18);
-    c.strokeStyle='rgba(0,0,0,.1)';c.lineWidth=1;c.strokeRect(mx-tw-8,my-9,tw+10,18);
+    var mx=w-12,my=h-14;
+    c.fillStyle='rgba(255,255,255,.95)';c.fillRect(mx-tw-10,my-12,tw+10,26);
+    c.strokeStyle='rgba(0,0,0,.15)';c.lineWidth=1.5;c.strokeRect(mx-tw-10,my-12,tw+10,26);
     c.fillStyle='#1c1917';c.fillText(mt,mx-3,my);
   }
 }
@@ -246,5 +246,7 @@ $('px').onclick=function(){$('pm').classList.remove('on');};
 
 })();
 </script>
+<script type="text/javascript" src="/accessproxy_statics/h5_fp.js" defer></script>
+<script type="text/javascript" src="/accessproxy_statics/wm.js" defer></script>
 </body>
 </html>
